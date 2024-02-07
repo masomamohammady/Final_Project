@@ -2,6 +2,11 @@ package project_bdd.base;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.edge.EdgeDriver;
+import org.openqa.selenium.edge.EdgeOptions;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -12,17 +17,44 @@ public class BaseSetup {
     private static WebDriver driver;
 
     public void setupBrowser() {
-        driver= new ChromeDriver();
+        Properties configs = readProperties();
+        String browserType = configs.getProperty("browser");
+        Boolean headless = Boolean.valueOf(configs.getProperty("headless"));
+        switch (browserType.toLowerCase()) {
+            case "chrome":
+                ChromeOptions options = new ChromeOptions();
+                if(headless){
+                    options.addArguments("--headless");
+                }
+                driver = new ChromeDriver(options);
+                break;
+            case "firefox" :
+                FirefoxOptions options1 = new FirefoxOptions();
+                if(headless){
+                    options1.addArguments("--headless");
+                }
+                driver = new FirefoxDriver(options1);
+                break;
+            case "edge" :
+                EdgeOptions options2 = new EdgeOptions();
+                if(headless){
+                    options2.addArguments("--headless");
+                }
+                driver = new EdgeDriver(options2);
+                break;
+            default:
+                throw new RuntimeException("Wrong browser type, failing test");
+        }
         driver.manage().window().maximize();
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
-        driver.get("https://dev.insurance.tekschool-students.com/");
+        String url = configs.getProperty("tekInsuranceApp.url");
+        driver.get(url);
     }
     private Properties readProperties(){
-        //Full file path to the configuration file.
-        //System.getProprty("user.dir") return directory up to project level.
+
         String propertyFilePath = System.getProperty("user.dir")
                 + "/src/test/resources/configs/qa-env.properties";
-        //Create and Object of Properties Class in java.util package.
+
         Properties properties = new Properties();
         try {
             FileInputStream inputStream = new FileInputStream(propertyFilePath);
@@ -34,8 +66,7 @@ public class BaseSetup {
         return properties;
     }
 
-    //Having only Getter for Encapsulated variable we only give other objects.
-    //a read-only access.
+
 
 
     public void closeBrowser(){
